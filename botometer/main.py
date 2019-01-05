@@ -1,5 +1,6 @@
 from __future__ import print_function
 import time
+from datetime import datetime
 
 import requests
 from requests import ConnectionError, HTTPError, Timeout
@@ -87,7 +88,7 @@ class Botometer(object):
 
         tweets = []
         for tweet in user_timeline:
-            if tweet.created_at < self.end_date and tweet.created_at > self.start_date:
+            if datetime.strptime(tweet['created_at'], '%a %b %d %H:%M:%S %z %Y') < self.end_date and datetime.strptime(tweet['created_at'], '%a %b %d %H:%M:%S %z %Y') > self.start_date:
                 tweets.append(tweet)
 
         if tweets:
@@ -104,7 +105,7 @@ class Botometer(object):
 
         mentions = []
         for mention in search['statuses']:
-            if mention.created_at < self.end_date and mention.created_at > self.start_date:
+            if datetime.strptime(mention['created_at'], '%a %b %d %H:%M:%S %z %Y') < self.end_date and datetime.strptime(mention['created_at'], '%a %b %d %H:%M:%S %z %Y') > self.start_date:
                 mentions.append(mention)
 
         payload = {
@@ -182,3 +183,26 @@ class Botometer(object):
                 if result is not None:
                     yield account, result
                     break
+
+
+
+start_date = datetime.strptime('Thu May 05 17:04:41 +0000 2016', '%a %b %d %H:%M:%S %z %Y')
+end_date = datetime.strptime('Thu May 20 17:04:41 +0000 2016', '%a %b %d %H:%M:%S %z %Y')
+
+mashape_key = "ILJI7szGPEmshmCRDLNk0SbzYCdyp1GYzPZjsnylLLq46lCHop"
+twitter_app_auth = {
+    'consumer_key': 'AHQEGXPfCdYybuAOlNr9JGVrI',
+    'consumer_secret': 'IJ6MQ2TqbjD5TynvYzKJNplyVQLwax3qIvSwTZG0txN8ni8Q6p',
+    'access_token': '1069386305228935168-aRYbGwzT1FgDpythuGziCe8rsrC6Fh',
+    'access_token_secret': '89ezGheMRDAyxnEgqc0WnrwYuMCW0tipbSUykl16XAlGw',
+  }
+bom = Botometer(wait_on_ratelimit=True,
+                          mashape_key=mashape_key,
+                          start_date=start_date,
+                          end_date = end_date,
+                          **twitter_app_auth)
+
+# Check a single account by screen name
+result = bom.check_account('@clayadavis')
+
+print(result)
