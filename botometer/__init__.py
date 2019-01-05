@@ -20,12 +20,15 @@ class Botometer(object):
                  consumer_key, consumer_secret,
                  access_token=None, access_token_secret=None,
                  mashape_key=None,
+                 start_date=None, end_date=None,
                  **kwargs):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.access_token_key = self.access_token = access_token
         self.access_token_secret = access_token_secret
         self.wait_on_ratelimit = kwargs.get('wait_on_ratelimit', False)
+        self.start_date = start_date
+        self.end_date = end_date
 
         self.mashape_key = mashape_key
 
@@ -82,8 +85,13 @@ class Botometer(object):
             e.args = (self._TWITTER_RL_MSG, 'statuses/user_timeline')
             raise e
 
-        if user_timeline:
-            user_data = user_timeline[0]['user']
+        tweets = []
+        for tweet in user_timeline:
+            if tweet.created_at < self.end_date and tweet.created_at > self.start_date:
+                tweets.append(tweet)
+
+        if tweets:
+            user_data = tweets[0]['user']
         else:
             user_data = self.twitter_api.get_user(user)
         screen_name = '@' + user_data['screen_name']
@@ -94,9 +102,14 @@ class Botometer(object):
             e.args = (self._TWITTER_RL_MSG, 'search/tweets')
             raise e
 
+        mentions = []
+        for mention in search['statuses']:
+            if mention.created_at < self.end_date and mention.created_at > self.start_date:
+                mentions.append(mention)
+
         payload = {
-            'mentions': search['statuses'],
-            'timeline': user_timeline,
+            'mentions': mentions,
+            'timeline': tweets,
             'user': user_data,
         }
 
